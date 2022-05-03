@@ -1,3 +1,7 @@
+# Convert SMAP data into Zarr format.
+#
+# Author: Alexey N. Shiklomanov (NASA GSFC 618)
+
 import os
 import re
 import datetime
