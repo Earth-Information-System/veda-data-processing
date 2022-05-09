@@ -5,7 +5,8 @@ software-release/npr7150.docx: npr7150.md
 	pandoc $< -o $@
 
 licenses:
-	conda run -n smap-download pip-licenses \
+	conda run -n smap-download \
+		pip-licenses \
 		--format=csv \
 		--with-urls \
 		--output-file=software-release/licenses.csv

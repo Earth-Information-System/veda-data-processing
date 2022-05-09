@@ -8,3 +8,5 @@ dependencies:
   - s3fs
   - xarray
   - zarr
+  - pip:
+    - pip-licenses
