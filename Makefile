@@ -10,9 +10,8 @@ licenses:
 		--format=csv \
 		--with-urls \
 		--output-file=software-release/licenses.csv
-	# # Full licenses. This doesn't currently work...
-	# conda run -n smap-download pip-licenses \
-	# 	--format=plain-vertical \
-	# 	--with-urls \
-	# 	--with-license-file \
-	# 	--output-file=software-release/licenses-full.txt
+	conda run -n smap-download pip-licenses \
+		--format=plain-vertical \
+		--with-urls \
+		--with-license-file \
+		--output-file=software-release/licenses-full.txt
