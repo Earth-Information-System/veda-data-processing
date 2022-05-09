@@ -38,7 +38,6 @@
 #    machine urs.earthdata.nasa.gov login token password MYBEARERTOKEN
 # where 'MYBEARERTOKEN' is your Earthdata bearer token.
 #
-# Script adapted by Alexey N. Shiklomanov (NASA GSFC 618).
 from __future__ import print_function
 
 import base64
@@ -47,6 +46,7 @@ import itertools
 import json
 import math
 import netrc
+import os
 import os.path
 import ssl
 import sys
@@ -271,7 +271,8 @@ def cmr_download(urls, force=False, quiet=False):
             if p.scheme == 'https':
                 credentials, token = get_login_credentials()
 
-        filename = url.split('/')[-1]
+        os.makedirs(short_name, exist_ok=True)
+        filename = short_name + '/' + url.split('/')[-1]
         if not quiet:
             print('{0}/{1}: {2}'.format(str(index).zfill(len(str(url_count))),
                                         url_count, filename))

@@ -4,6 +4,7 @@ channels:
   - defaults
 dependencies:
   - python
-  - xarray
-  - s3fs
   - pip
+  - s3fs
+  - xarray
+  - zarr
