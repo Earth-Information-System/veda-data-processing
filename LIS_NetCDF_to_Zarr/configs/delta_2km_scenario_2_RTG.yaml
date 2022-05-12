@@ -1,0 +1,11 @@
+---
+
+enable_logging:   False
+dask_workers:     4
+bucket:           eis-dh-hydro
+input_path:       'LIS_NETCDF/DELTA_2km/9CLIM_RA_LAKE/ROUTING/**/LIS_HIST*.nc'
+target_path:      'LIS/DELTA_2km/9CLIM_RA_LAKE/ROUTING/LIS_HIST.d01.zarr'
+target_chunks:    {'time': 10}
+inputs_per_chunk: 10
+nitems_per_file:  1
+temp_dir:         '/home/jovyan/efs/tmp'
