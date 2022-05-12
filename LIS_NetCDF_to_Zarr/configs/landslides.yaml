@@ -1,0 +1,11 @@
+---
+
+enable_logging:   False
+dask_workers:     4
+bucket:           'eis-dh-hydro'
+input_path:       'LANDSLIDES/predictions/*.nc'
+target_path:      'LANDSLIDES/PREDICTIONS_ZARR/ky_predictions_2000_2020.zarr'
+target_chunks:    {'time': 60}
+inputs_per_chunk: 60
+nitems_per_file:  1
+temp_dir:         '/home/jovyan/efs/tmp'
