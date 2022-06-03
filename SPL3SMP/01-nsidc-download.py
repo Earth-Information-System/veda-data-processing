@@ -64,8 +64,9 @@ except ImportError:
 # SMAP soil moisture L3 gridded
 short_name = 'SPL3SMP'
 version = '008'
-time_start = '2020-01-01'
-time_end = '2020-02-01'
+time_start = '2018-01-01'
+time_end = ''
+# time_end = '2022-06-01'
 bounding_box = ''
 polygon = ''
 filename_filter = ''
