@@ -1,0 +1,5 @@
+SPL3SMP*/
+dask-worker-space/
+logs/
+
+slurm-*
