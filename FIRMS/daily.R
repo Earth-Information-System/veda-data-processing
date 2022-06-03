@@ -4,6 +4,7 @@ library(sf)
 library(dplyr)
 
 outfile <- strftime(Sys.time(), "processed-output/FIRMS-%Y-%m-%d-%H%M%S.parquet")
+message("Writing daily output to: ", outfile)
 
 url_modis <- "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv"
 url_vsnpp <- "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_Global_24h.csv"
