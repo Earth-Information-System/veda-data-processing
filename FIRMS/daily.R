@@ -1,17 +1,67 @@
-# pak::pak(c("sfarrow"))
 library(sfarrow)
 library(sf)
+library(vroom)
+library(lubridate)
 library(dplyr)
 
-outfile <- strftime(Sys.time(), "processed-output/FIRMS-%Y-%m-%d-%H%M%S.parquet")
+firms_url <- "https://nrt3.modaps.eosdis.nasa.gov/api/v2/content/archives/FIRMS"
+
+n20_dir <- "noaa-20-viirs-c2"
+n20_pattern <- "J1_VIIRS_C2_Global_VJ114IMGTDL_NRT_%d%03d.txt"
+modis_dir <- "modis-c6.1"
+modis_pattern <- "MODIS_C6_1_Global_MCD14DL_NRT_%d%03d.txt"
+snpp_dir <- "suomi-npp-viirs-c2"
+snpp_pattern <- "SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_%d%03d.txt"
+
+tryCatch(
+  token <- readLines(".lance_token"),
+  error = function(e) {
+    stop(
+      "File '.lance_token' not found in current working directory. ",
+      "This script requires a LANCE token. ",
+      "Create a LANCE token at https://nrt3.modaps.eosdis.nasa.gov/profile/app-keys ",
+      "and put it in the '.lance_token' file to run this script."
+    )
+  }
+)
+
+today_date <- Sys.Date()
+argv <- commandArgs(trailingOnly = TRUE)
+if (length(argv) > 0) {
+  # argv <- "2022-06-02"
+  today_date <- as.Date(argv[1])
+}
+
+outfile <- strftime(today_date, "processed-output/FIRMS-daily-%Y-%m-%d.parquet")
 message("Writing daily output to: ", outfile)
 
-url_modis <- "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv"
-url_vsnpp <- "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_Global_24h.csv"
-url_vn20 <- "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv"
+if (file.exists(outfile)) {
+  stop("Output file already exists.")
+}
+
+url_modis <- file.path(
+  firms_url, modis_dir, "Global",
+  sprintf(modis_pattern, year(today_date), yday(today_date))
+)
+url_snpp <- file.path(
+  firms_url, snpp_dir, "Global",
+  sprintf(snpp_pattern, year(today_date), yday(today_date))
+)
+url_n20 <- file.path(
+  firms_url, n20_dir, "Global",
+  sprintf(n20_pattern, year(today_date), yday(today_date))
+)
 
 get_data <- function(url, instrument) {
-  raw <- read_sf(url)
+  # url <- url_modis
+  tfile <- tempfile(fileext=".txt")
+  on.exit(file.remove(tfile), add = TRUE)
+  download.file(
+    url, tfile,
+    headers = c("Authorization" = paste0("Bearer ", token))
+  )
+  cc <- cols(confidence = "c", satellite = "c", version = "c")
+  raw <- vroom(tfile, col_types = cc)
   dsf <- st_as_sf(
     raw,
     coords = c("longitude", "latitude"),
@@ -23,7 +73,7 @@ get_data <- function(url, instrument) {
 
 datlist <- Map(
   get_data,
-  c(url_modis, url_vsnpp, url_vn20),
+  c(url_modis, url_snpp, url_n20),
   c("MODIS", "SUOMI-NPP-VIIRS", "NOAA-20-VIIRS")
 )
 
