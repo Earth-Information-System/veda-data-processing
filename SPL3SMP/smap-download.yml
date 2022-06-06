@@ -4,9 +4,12 @@ channels:
   - defaults
 dependencies:
   - python
+  - ipython
   - pip
+  - dask
+  - distributed
+  - h5netcdf
+  - rechunker
   - s3fs
   - xarray
   - zarr
-  - pip:
-    - pip-licenses

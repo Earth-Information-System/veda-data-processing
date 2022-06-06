@@ -16,22 +16,21 @@ def main():
     print("Reading AM files...")
     dat_am = xr.open_mfdataset(datafiles,
                                preprocess=mypreproc,
+                               engine='h5netcdf',
+                               phony_dims='sort',
                                combine='by_coords',
                                group="Soil_Moisture_Retrieval_Data_AM")
 
     print("Reading PM files...")
     dat_pm = xr.open_mfdataset(datafiles,
                                preprocess=mypreproc,
+                               engine='h5netcdf',
+                               phony_dims='sort',
                                combine='by_coords',
                                group="Soil_Moisture_Retrieval_Data_PM")
 
     print("Altering chunking strategy...")
     dat_both = xr.merge((dat_am, dat_pm))
-    # dat_both = xr.merge((dat_am, dat_pm)).chunk({
-    #     "easting_m": 50,
-    #     "northing_m": 50,
-    #     "datetime": 50
-    # })
     print("Writing Zarr output...")
     zarr_path = short_name + "-unchunked.zarr"
     dat_both.to_zarr(zarr_path, consolidated=True, mode='w')
