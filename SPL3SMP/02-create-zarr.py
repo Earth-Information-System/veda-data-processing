@@ -44,8 +44,8 @@ def mypreproc(d_am_raw):
     is_am = dim_names[0] == "phony_dim_0"
     d_am = d_am_raw
     d_am = d_am.rename_dims({
-        dim_names[0]: "easting_m",
-        dim_names[1]: "northing_m",
+        dim_names[0]: "northing_m",
+        dim_names[1]: "easting_m",
         dim_names[2]: "ranked_land_cover"
     })
 
@@ -59,9 +59,10 @@ def mypreproc(d_am_raw):
     # ease_epsg = "epsg:6933"
 
     # NOTE: Upper-left to lower-right; therefore, x increases but y decreases
+    # NOTE: ulx,uly are the corners of the pixel. To get to the center, add half the size
     d_am = d_am.assign_coords({
-        "easting_m": ulx + x_size * d_am.easting_m,
-        "northing_m": uly - y_size * d_am.northing_m,
+        "easting_m": ulx + 0.5*x_size + x_size * d_am.easting_m,
+        "northing_m": uly - 0.5*y_size - y_size * d_am.northing_m,
         "datetime": fdate
     })
     d_am = d_am.expand_dims('datetime', axis=2)

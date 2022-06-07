@@ -1,4 +1,5 @@
 SPL3SMP*/
+*.zarr/
 dask-worker-space/
 logs/
 
