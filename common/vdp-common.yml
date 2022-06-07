@@ -1,0 +1,17 @@
+name: vdp-common
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - ipython
+  - pip
+  - pyright
+  - dask
+  - distributed
+  - netcdf4
+  - h5netcdf
+  - rechunker
+  - rioxarray
+  - xarray
+  - zarr
