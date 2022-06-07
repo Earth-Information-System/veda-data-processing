@@ -1,5 +1,6 @@
 import argparse
 from os import makedirs
+from os.path import exists
 
 import xarray as xr
 import numpy as np
@@ -30,20 +31,23 @@ dat.rio.set_spatial_dims(x_dim=x_dim, y_dim=y_dim, inplace=True)
 makedirs(outdir, exist_ok=True)
 
 cogvars = sorted(dat.keys())
-cogvars = cogvars[6:]
-cogvars = [v for v in cogvars if not v in ("easting_m_wrong", "northing_m_wrong")]
 
 for var in cogvars:
     # var = list(cogvars)[0]
     dat_v = dat[var]
+    if timevar not in dat_v:
+        print(f"Skipping variable `{var}` without time dimension.")
+        continue
     vardir = f"{outdir}/{var}"
     makedirs(vardir, exist_ok=True)
     for t in dat_v[timevar]:
         # t = dat[timevar][0]
         datestring = np.datetime_as_string(t, unit="D")
-        print(f"{var}: {datestring}")
+        print(f"{var}: {datestring}" + " "*40, end="\r")
+        outfile = f"{vardir}/SPL3SMP-{var}-{datestring}.tif"
+        if exists(outfile):
+            continue
         dat_vt = dat_v.sel({timevar: t})
         dat_vt.\
             rename({y_dim: 'y', x_dim: 'x'}).\
-            transpose('y', 'x').\
-            rio.to_raster(f"{vardir}/SPL3SMP-{var}-{datestring}.tif")
+            rio.to_raster(outfile)
