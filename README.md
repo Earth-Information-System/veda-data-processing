@@ -1,4 +1,5 @@
 # veda-data-processing
+
 Scripts for data downloading, transformation, and related processing for the VEDA project.
 
 ## Instructions for uploading data
@@ -9,15 +10,22 @@ Scripts for data downloading, transformation, and related processing for the VED
 2. Obtain AWS credentials from MAAP.
   In a Jupyter notebook running in MAAP, run the following code:
 
-    import boto3
-    session = boto3.Session()
-    cred = session.get_credentials().get_frozen_credentials()
-    print(f"""
-    export AWS_ACCESS_KEY_ID={cred.access_key}
-    export AWS_SECRET_ACCESS_KEY={cred.secret_key}
-    export AWS_SESSION_TOKEN={cred.token}
-    """)
-  
+  ```python
+  import boto3
+  sts_client = boto3.client('sts')
+  assumed_role_object = sts_client.assume_role(
+      RoleArn='arn:aws:iam::114506680961:role/MAAP-users-VEDA-role',
+      RoleSessionName='TestSession'
+  )
+  credentials = assumed_role_object['Credentials']
+  print(f"""
+  # Credentials expire: {credentials["Expiration"].strftime("%Y-%m-%d %H:%M")}
+  export AWS_ACCESS_KEY_ID={credentials["AccessKeyId"]}
+  export AWS_SECRET_ACCESS_KEY={credentials["SecretAccessKey"]}
+  export AWS_SESSION_TOKEN={credentials["SessionToken"]}
+  """)
+  ```
+    
 3. Open a terminal on the machine where the data are stored.
   Copy the output of that command, paste it into that terminal, and hit Enter.
   This will set your temporary AWS credentials.
