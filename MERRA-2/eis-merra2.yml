@@ -1,0 +1,16 @@
+name: eis-merra2
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - ipython
+  - pip
+  - dask
+  - distributed
+  - h5netcdf
+  - pangeo-forge-recipes
+  - rechunker
+  - s3fs
+  - xarray
+  - zarr
