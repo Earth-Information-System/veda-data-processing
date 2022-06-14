@@ -9,8 +9,11 @@ dependencies:
   - pyright
   - dask
   - distributed
+  - geopandas
   - netcdf4
   - h5netcdf
+  - pandas
+  - pyarrow
   - rechunker
   - rioxarray
   - xarray
