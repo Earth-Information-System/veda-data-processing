@@ -130,3 +130,13 @@ dmypy.json
 
 # Software release files
 software-release/
+
+# Raw input data
+**/raw-input/
+
+# Zarr outputs
+**/*.zarr/
+**/*.metadata/
+
+# SLURM logs
+**/logs/

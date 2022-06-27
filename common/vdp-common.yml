@@ -14,6 +14,7 @@ dependencies:
   - h5netcdf
   - pandas
   - pyarrow
+  - pangeo-forge-recipes
   - rechunker
   - rioxarray
   - xarray

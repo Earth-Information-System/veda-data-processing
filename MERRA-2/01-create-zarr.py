@@ -1,4 +1,3 @@
-
 import xarray as xr
 import pandas as pd
 
@@ -46,7 +45,6 @@ print('Preparing target...')
 recipe.prepare_target()
 
 print('Executing recipe...')
-
 delayed = recipe.to_dask()
 with ProgressBar():
     delayed.compute()
