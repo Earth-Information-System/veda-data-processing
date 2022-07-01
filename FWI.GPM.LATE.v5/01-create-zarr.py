@@ -56,8 +56,8 @@ target = f"{prefix}.zarr"
 with ProgressBar():
     dat_extended.to_zarr(target, mode="w")
 
-with open("processed-files.txt", "w") as f:
-    f.writelines(files)
+with open("processed-files-bak.txt", "w") as f:
+    f.writelines(file + "\n" for file in files)
 
 print("Testing zarr")
 dtest = xr.open_zarr(target)
