@@ -10,6 +10,8 @@
 
 import datetime
 import re
+import glob
+import sys
 
 import xarray as xr
 import pandas as pd
@@ -25,7 +27,8 @@ with open(procfile, "r") as f:
     procfiles = [l for l in f.read().splitlines() if l != '']
 newfiles = sorted(set(allfiles) - set(procfiles))
 
-# lastday = xr.open_zarr(zarrpath)[timevar].max().values
+if len(newfiles) == 0:
+    sys.exit("No new files to process!")
 
 def parse_date(path):
     ms = re.search(r"\.(\d{4})(\d{2})(\d{2})\.nc$", path)
@@ -46,9 +49,9 @@ dtarget = xr.open_zarr(zarrpath)
 # small numbers of files.
 # TODO The much faster way to do this is to split up `dnew_all` into existing
 # vs. new chunks and then do those separately.
-for t in dnew_all.time:
-    print(t)
-    dnew = dnew_all.sel(time=t)
+for idt, t in enumerate(dnew_all.time):
+    dnew = dnew_all.isel(time=slice(idt, idt+1))
+    print(dnew.time)
     # Is the current timestamp in the Zarr file?
     is_in = dtarget.time.isin(dnew.time)
     n_is_in = is_in.sum()
@@ -57,6 +60,7 @@ for t in dnew_all.time:
     elif n_is_in == 1:
         # Yes! Where exactly?
         itime = int(np.where(is_in)[0])
+        print(f"Inserting into time location {itime}")
         # Write to that exact location (replace NaNs with new data)
         dnew.to_zarr(zarrpath, region={
             "time": slice(itime, itime+1),
@@ -67,10 +71,12 @@ for t in dnew_all.time:
         # No, so we need to extend the time series.
         # For performance, we extend by one full time chunksize (`tchunk`)
         tchunk = dtarget.chunks["time"][-1]
+        print(f"Creating new time chunk of size {tchunk}...")
         newdates = pd.date_range(
             dtarget.time.max().values + pd.Timedelta(1, 'D'),
             dtarget.time.max().values + pd.Timedelta(tchunk, 'D')
         )
+        print(f"...from {newdates.min()} to {newdates.max()}.")
         assert len(newdates) == len(tchunk)
         # Extend the current timestep out to size `tchunk`, filling with `Nan`s
         dummy = dnew.reindex({"time": newdates}, fill_value=np.nan)
