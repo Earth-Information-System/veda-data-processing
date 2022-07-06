@@ -72,7 +72,7 @@ get_date <- function(today_date) {
 
 get_data <- function(url, instrument) {
   # url <- url_modis
-  tfile <- tempfile(fileext=".txt")
+  tfile <- tempfile(fileext=".txt", tmpdir = tempdir(check=TRUE))
   on.exit(file.remove(tfile), add = TRUE)
   download.file(
     url, tfile,
