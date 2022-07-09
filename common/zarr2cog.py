@@ -14,9 +14,11 @@ parser.add_argument('--crs', type=str, help='Dataset CRS string (e.g., "epsg:432
 parser.add_argument('--x_dim', type=str, help='Name of X dimension')
 parser.add_argument('--y_dim', type=str, help='Name of Y dimension')
 parser.add_argument("--timevar", type=str, help='Name of time dimension')
+parser.add_argument("--timeunit", type=str, help='Time unit. See `numpy.datetime_as_string` argument `unit`. (D=daily)')
 
 args = parser.parse_args()
-# args = parser.parse_args(['--outdir=SPL3SMP-cog', '--dataset=SPL3SMP.zarr', '--crs=EPSG:6933', '--x_dim=easting_m', '--y_dim=northing_m', '--timevar=datetime', '--prefix=SPL3SMP'])
+# args = parser.parse_args(['--outdir=SPL3SMP-cog', '--dataset=SPL3SMP.zarr', '--crs=EPSG:6933', '--x_dim=easting_m', '--y_dim=northing_m', '--timevar=datetime', '--timeunit=D'  '--prefix=SPL3SMP'])
+# args = parser.parse_args(['--outdir=OCO2_GEOS_L3CO2_day.COG', '--dataset=OCO2_GEOS_L3CO2_day.zarr', '--crs=EPSG:4326', '--x_dim=lon', '--y_dim=lat', '--timevar=time', '--timeunit=D', '--prefix=OCO2_GEOS_L3CO2_day'])
 
 outdir = args.outdir
 dataset = args.dataset
@@ -25,6 +27,11 @@ y_dim = args.y_dim
 x_dim = args.x_dim
 timevar = args.timevar
 prefix = args.prefix
+timeunit = args.timeunit
+
+# TODO: Support other time
+if timeunit != 'D':
+    raise Exception("Only timeunit 'D' currently supported.")
 
 dat = xr.open_zarr(dataset, consolidated=True).transpose(y_dim, x_dim, ...)
 dat.rio.write_crs(crs, inplace=True)
@@ -44,8 +51,8 @@ for var in cogvars:
     makedirs(vardir, exist_ok=True)
     for t in dat_v[timevar]:
         # t = dat_v[timevar][0]
-        datestring = np.datetime_as_string(t, unit="D")
-        print(f"{var}: {datestring}" + " "*40, end="\r")
+        datestring = np.datetime_as_string(t, unit=timeunit)
+        print(f"{var}: {datestring}".ljust(80), end="\r")
         outfile = f"{vardir}/{prefix}-{var}-{datestring}.tif"
         if exists(outfile):
             continue
