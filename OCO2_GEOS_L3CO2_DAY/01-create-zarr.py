@@ -23,7 +23,16 @@ prefix = "OCO2_GEOS_L3CO2_day"
 outfile = f"{prefix}.zarr"
 outmeta = f"{prefix}.metadata"
 
-times = pd.date_range("2015-01-01", "2021-08-01", freq="1D")
+start_date = "2015-01-01"
+# start_date = "2021-01-01"
+end_date = "2021-08-01"
+chunking = {
+    "lon": 100,
+    "lat": 100,
+    "time": 100
+}
+
+times = pd.date_range(start_date, end_date, freq="1D")
 concat_dim = ConcatDim(name="time", keys=times, nitems_per_file=1)
 pattern = FilePattern(format_function, concat_dim)
 
@@ -36,7 +45,7 @@ storage = StorageConfig(FSSpecTarget(LocalFileSystem(), outfile),
 recipe = XarrayZarrRecipe(
     pattern, 
     storage_config = storage,
-    target_chunks = {"lon": 100, "lat": 100, "time": 100},
+    target_chunks = chunking,
     cache_inputs = False
 )
 
@@ -52,3 +61,6 @@ with ProgressBar():
 
 print("Testing ability to open dataset.")
 testdat = xr.open_zarr(outfile, consolidated=True)
+annual_mean = testdat["XCO2"].groupby("time.year").mean(["lat", "lon"]).values
+print(annual_mean)
+print("Done!")

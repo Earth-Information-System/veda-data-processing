@@ -6,16 +6,17 @@
 #SBATCH --constraint='sky|cas|hasw'
 #SBATCH --output=logs/create-zarr-%j.log
 
-set -euxo pipefail
+set -eo pipefail
 
 source ~/.bash_functions
 mod_py39
 
 conda info --envs
-echo "Python path: $(conda run -n vdp-common which python)"
-echo "Python version: $(conda run -n vdp-common python --version)"
+CONDA_ENV="vdp-common"
+echo "Python path: $(conda run -n $CONDA_ENV which python)"
+echo "Python version: $(conda run -n $CONDA_ENV python --version)"
 
-conda run -n vdp-common python -u 01-create-zarr.py > logs/01-create-zarr.py
+conda run -n $CONDA_ENV python -u 01-create-zarr.py > logs/01-create-zarr.py
 RESULT=$?
 if [[ $RESULT -eq 0 ]]; then
   echo "Done!"
