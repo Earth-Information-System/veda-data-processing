@@ -3,6 +3,38 @@ library(sfarrow)
 library(dplyr)
 library(lubridate)
 
+dat <- open_dataset("processed-output/by-date-version-bak/year=2022/month=5")
+
+dat %>%
+  group_by(mday, version) %>%
+  write_dataset(
+    "processed-output/by-date-version/year=2022/month=5",
+    existing_data_behavior = "delete_matching",
+    coerce_timestamps = "ms"
+  )
+
+# dat <- open_dataset("processed-output/by-date-version/year=2022/month=4") %>%
+#   collect() %>%
+#   as_tibble()
+
+# for (mday in seq(2, 30)) {
+#   # mday <- 3
+#   dat <- open_dataset(paste0("processed-output/by-date-version/year=2022/month=6/mday=", mday)) %>%
+#     collect() %>%
+#     as_tibble()
+# }
+
+# dat <- open_dataset("processed-output/by-date-version/year=2022") %>%
+#   filter(acq_date >= as.Date("2022-06-02")) %>%
+#   collect()
+
+#   select(acq_date, acq_time) %>%
+#   collect() %>%
+#   as_tibble()
+# head(dat)
+
+##################################################
+
 dtime <- open_dataset(
   "processed-output/by-date-stability"
 )

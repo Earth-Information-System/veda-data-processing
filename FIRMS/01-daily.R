@@ -52,6 +52,7 @@ get_date <- function(today_date) {
       across(starts_with("bright_"), as.numeric),
       acq_timestamp = acq_date + seconds(acq_time),
       acq_timestr = strftime(acq_timestamp, "%H%M%S", tz = "UTC"),
+      acq_time = as.character(acq_time),  # Older data store this as character; parquet doesn't like mismatched types
       year = year(acq_date),
       month = month(acq_date),
       mday = mday(acq_date)
@@ -66,7 +67,8 @@ get_date <- function(today_date) {
     group_by(year, month, mday, version) %>%
     write_dataset(
       "processed-output/by-date-version",
-      existing_data_behavior = "delete_matching"
+      existing_data_behavior = "delete_matching",
+      coerce_timestamps = "ms"
     )
 }
 
