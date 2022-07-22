@@ -77,10 +77,10 @@ for idt, t in enumerate(dnew_all.time):
             dtarget.time.max().values + pd.Timedelta(tchunk, 'D')
         )
         print(f"...from {newdates.min()} to {newdates.max()}.")
-        assert len(newdates) == len(tchunk)
+        assert len(newdates) == tchunk
         # Extend the current timestep out to size `tchunk`, filling with `Nan`s
         dummy = dnew.reindex({"time": newdates}, fill_value=np.nan)
-        assert len(dummy.time) == len(tchunk)
+        assert len(dummy.time) == tchunk
         # Now, append to the existing Zarr data store
         dummy.to_zarr(zarrpath, append_dim="time")
 
