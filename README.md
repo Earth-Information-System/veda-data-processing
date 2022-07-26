@@ -32,7 +32,7 @@ Scripts for data downloading, transformation, and related processing for the VED
   To confirm that the variables were set, you can run `env | grep AWS`.
   To confirm that you can actually access the relevant bucket, run `aws s3 ls s3://veda-data-store-staging/`.
 
-4. Use a command like `aws s3 sync s3://veda-data-store-staging/EIS/<your-dataset-name>/ path/to/your/dataset/` to push the data into S3.
+4. Use a command like `aws s3 sync path/to/your/dataset/ s3://veda-data-store-staging/EIS/<your-dataset-name>/` to push the data into S3.
   Note the location in S3 (`EIS` "subdirectory").
   Note also the trailing slashes for the sync command -- this will sync the _contents_ of `path/to/your/dataset/` with the contents of `.../EIS/<your-dataset-name>/`
   (i.e., it will put the file `path/to/your/dataset/somefile` into `.../EIS/<your-dataset-name>/somefile`.
