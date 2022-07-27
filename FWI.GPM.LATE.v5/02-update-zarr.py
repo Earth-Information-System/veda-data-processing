@@ -50,6 +50,7 @@ dtarget = xr.open_zarr(zarrpath)
 # TODO The much faster way to do this is to split up `dnew_all` into existing
 # vs. new chunks and then do those separately.
 for idt, t in enumerate(dnew_all.time):
+    # idt = 1; t = dnew_all.time[idt]
     dnew = dnew_all.isel(time=slice(idt, idt+1))
     print(dnew.time)
     # Is the current timestamp in the Zarr file?
@@ -60,6 +61,8 @@ for idt, t in enumerate(dnew_all.time):
     elif n_is_in == 1:
         # Yes! Where exactly?
         itime = int(np.where(is_in)[0])
+        assert dtarget.isel(time=itime).time == dnew.time, "Mismatch in times"
+        dtarget.time.values
         print(f"Inserting into time location {itime}")
         # Write to that exact location (replace NaNs with new data)
         dnew.to_zarr(zarrpath, region={
@@ -87,6 +90,7 @@ for idt, t in enumerate(dnew_all.time):
 # Test the result
 print("Testing new Zarr...")
 dtest = xr.open_zarr(zarrpath)
+dtest.sel(time = slice("2022-06-01", "2022-06-15"))
 
 with open(procfile, "a") as f:
     # Note: Flipping the position of the \n means this adds a blank line
