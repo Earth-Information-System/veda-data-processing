@@ -42,8 +42,6 @@ dnew_raw = xr.open_mfdataset(newfiles, combine="nested", concat_dim="time")
 dates = pd.to_datetime([parse_date(f) for f in newfiles])
 dnew_all = dnew_raw.assign_coords(time=dates)
 
-dtarget = xr.open_zarr(zarrpath)
-
 # For now, do this individually for each timestep. It's very inefficient (lots
 # of writes) but safe and conceptually simple, and shouldn't take too long for
 # small numbers of files.
@@ -52,8 +50,11 @@ dtarget = xr.open_zarr(zarrpath)
 for idt, t in enumerate(dnew_all.time):
     # idt = 1; t = dnew_all.time[idt]
     dnew = dnew_all.isel(time=slice(idt, idt+1))
-    print(dnew.time)
+    print(dnew.time.values[0])
     # Is the current timestamp in the Zarr file?
+    # NOTE: Have to re-read `dtarget` each iteration because it may have been
+    # expanded by the code below.
+    dtarget = xr.open_zarr(zarrpath)
     is_in = dtarget.time.isin(dnew.time)
     n_is_in = is_in.sum()
     if n_is_in > 1:
@@ -62,7 +63,6 @@ for idt, t in enumerate(dnew_all.time):
         # Yes! Where exactly?
         itime = int(np.where(is_in)[0])
         assert dtarget.isel(time=itime).time == dnew.time, "Mismatch in times"
-        dtarget.time.values
         print(f"Inserting into time location {itime}")
         # Write to that exact location (replace NaNs with new data)
         dnew.to_zarr(zarrpath, region={
@@ -87,15 +87,16 @@ for idt, t in enumerate(dnew_all.time):
         # Now, append to the existing Zarr data store
         dummy.to_zarr(zarrpath, append_dim="time")
 
+    ifile = newfiles[idt]
+    with open(procfile, "a") as f:
+        # Note: Flipping the position of the \n means this adds a blank line
+        # between "groups" of processed files. That's a minor feature -- it lets us
+        # see when groups of files have been processed.
+        f.write("\n" + ifile)
+
 # Test the result
 print("Testing new Zarr...")
 dtest = xr.open_zarr(zarrpath)
 dtest.sel(time = slice("2022-06-01", "2022-06-15"))
-
-with open(procfile, "a") as f:
-    # Note: Flipping the position of the \n means this adds a blank line
-    # between "groups" of processed files. That's a minor feature -- it lets us
-    # see when groups of files have been processed.
-    f.writelines("\n" + file for file in newfiles)
 
 print("Done!")
