@@ -1,66 +1,55 @@
+#!/usr/bin/env python3
+import glob
+import datetime
+import re
+
 import xarray as xr
 import pandas as pd
+import numpy as np
 
-# from tqdm.auto import tqdm
-from dask.diagnostics.progress import ProgressBar 
-
-from fsspec.implementations.local import LocalFileSystem
-
-from pangeo_forge_recipes.patterns import ConcatDim, FilePattern
-from pangeo_forge_recipes.recipes import XarrayZarrRecipe
-from pangeo_forge_recipes.storage import FSSpecTarget, StorageConfig
-
-def format_function(time):
-    # "./raw-data/2021/oco2_GEOS_L3CO2_day_20211030_B10206Ar.nc4.xml"
-    base_pattern = "./raw-data/{yyyy}/oco2_GEOS_L3CO2_day_{yyyy}{mm}{dd}_B10206Ar.nc4"
-    return base_pattern.format(
-        yyyy=time.strftime("%Y"),
-        mm=time.strftime("%m"),
-        dd=time.strftime("%d")
-    )
+from dask.diagnostics.progress import ProgressBar
 
 prefix = "OCO2_GEOS_L3CO2_day"
-outfile = f"{prefix}.zarr"
-outmeta = f"{prefix}.metadata"
+target = f"{prefix}-v2.zarr"
+procfile = "processed-files.txt"
 
-start_date = "2015-01-01"
-# start_date = "2021-01-01"
-end_date = "2021-08-01"
+files = sorted(list(glob.glob("./raw-data/*/oco2_GEOS_L3CO2_day_*.nc4")))
+# files = files[0:60]
+
 chunking = {
-    "lon": 100,
+    "time": 100,
     "lat": 100,
-    "time": 100
+    "lon": 100
 }
 
-times = pd.date_range(start_date, end_date, freq="1D")
-concat_dim = ConcatDim(name="time", keys=times, nitems_per_file=1)
-pattern = FilePattern(format_function, concat_dim)
+print("Reading dataset...")
+dat = xr.open_mfdataset(files)
 
-# id0, url0 = next(pattern.items())
-# f0 = xr.open_dataset(url0)
+ntime = len(dat.time)
+residual_chunks = chunking["time"] - (ntime % chunking["time"])
 
-storage = StorageConfig(FSSpecTarget(LocalFileSystem(), outfile),
-                        FSSpecTarget(LocalFileSystem(), outmeta))
-
-recipe = XarrayZarrRecipe(
-    pattern, 
-    storage_config = storage,
-    target_chunks = chunking,
-    cache_inputs = False
+print("Extending time series for even chunking...")
+dates = dat.time.values
+date_max = dates.max()
+newdates = pd.date_range(
+    dates.max() + pd.Timedelta(1, 'D'),
+    dates.max() + pd.Timedelta(residual_chunks, 'D')
 )
+assert len(newdates) == residual_chunks
+alldates = np.concatenate((dates, newdates))
+assert len(alldates) % chunking["time"] == 0
+dat_extended = dat.reindex({"time": alldates}, fill_value = np.nan)
+assert len(dat_extended.time) % chunking["time"] == 0
+dat_extended = dat_extended.chunk(chunking)
 
-delayed = recipe.to_dask()
-print('Executing recipe...')
+print("Writing output zarr...")
 with ProgressBar():
-    try:
-        delayed.compute()
-    except RuntimeError as err:
-        print(f"Hit error {type(err)=}, {err=}")
-        print("Trying again")
-        delayed.compute()
+    dat_extended.to_zarr(target, mode="w")
 
-print("Testing ability to open dataset.")
-testdat = xr.open_zarr(outfile, consolidated=True)
-annual_mean = testdat["XCO2"].groupby("time.year").mean(["lat", "lon"]).values
-print(annual_mean)
+with open(procfile, "w") as f:
+    f.writelines(file + "\n" for file in files)
+
+print("Testing zarr")
+dtest = xr.open_zarr(target)
+dtest.sel(time = slice("2015-02-01", "2015-02-10"))
 print("Done!")
