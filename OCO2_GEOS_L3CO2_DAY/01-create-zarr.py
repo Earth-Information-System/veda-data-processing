@@ -10,7 +10,7 @@ import numpy as np
 from dask.diagnostics.progress import ProgressBar
 
 prefix = "OCO2_GEOS_L3CO2_day"
-target = f"{prefix}-v2.zarr"
+target = f"{prefix}.zarr"
 procfile = "processed-files.txt"
 
 files = sorted(list(glob.glob("./raw-data/*/oco2_GEOS_L3CO2_day_*.nc4")))

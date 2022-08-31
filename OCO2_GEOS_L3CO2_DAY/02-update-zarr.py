@@ -20,7 +20,7 @@ import numpy as np
 prefix = "OCO2_GEOS_L3CO2_day"
 procfile = "processed-files.txt"
 
-zarrpath = f"{prefix}-v2.zarr"
+zarrpath = f"{prefix}.zarr"
 
 allfiles = sorted(list(glob.glob("./raw-data/*/oco2_GEOS_L3CO2_day_*.nc4")))
 # allfiles = allfiles[0:110]
