@@ -2,3 +2,4 @@ raw-data/
 *.COG/
 *.zarr/
 *.metadata/
+processed-files.txt

@@ -81,15 +81,16 @@ for idt, t in enumerate(dnew_all.time):
         # Now, append to the existing Zarr data store
         dummy.to_zarr(zarrpath, append_dim="time")
 
+    ifile = newfiles[idt]
+    with open(procfile, "a") as f:
+        # Note: Flipping the position of the \n means this adds a blank line
+        # between "groups" of processed files. That's a minor feature -- it lets us
+        # see when groups of files have been processed.
+        f.write("\n" + ifile)
+
 # Test the result
 print("Testing new Zarr...")
 dtest = xr.open_zarr(zarrpath)
 dtest.sel(time = slice("2022-06-01", "2022-06-15"))
-
-with open(procfile, "a") as f:
-    # Note: Flipping the position of the \n means this adds a blank line
-    # between "groups" of processed files. That's a minor feature -- it lets us
-    # see when groups of files have been processed.
-    f.writelines("\n" + file for file in newfiles)
 
 print("Done!")
