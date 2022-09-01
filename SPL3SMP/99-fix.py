@@ -2,7 +2,7 @@ import zarr
 import numpy as np
 import xarray as xr
 
-dataset = "../SPL3SMP/SPL3SMP.zarr"
+dataset = "./SPL3SMP.zarr"
 
 # Fix SPL3SMP coordinates
 dz = zarr.open(dataset)
@@ -29,6 +29,8 @@ dz["/easting_m_correct"] = east2
 zarr.consolidate_metadata(dataset)
 
 dat = xr.open_zarr(dataset, consolidated=True)
+dat.easting_m.max().values
+dat.isel(northing_m = slice(0, 100))
 
 # ulx_gdal = -17385546.560
 # ulx = dat.easting_m.min().values

@@ -2,5 +2,6 @@ SPL3SMP*/
 *.zarr/
 dask-worker-space/
 logs/
+processed-files.txt
 
 slurm-*

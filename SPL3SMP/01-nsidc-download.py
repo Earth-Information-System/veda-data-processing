@@ -64,9 +64,10 @@ except ImportError:
 # SMAP soil moisture L3 gridded
 short_name = 'SPL3SMP'
 version = '008'
-time_start = '2018-01-01'
-time_end = ''
+# time_start = '2018-01-01'
 # time_end = '2022-06-01'
+time_start = '2022-07-20'
+time_end = '2022-09-01'
 bounding_box = ''
 polygon = ''
 filename_filter = ''
@@ -277,6 +278,7 @@ def cmr_download(urls, force=False, quiet=False):
         if not quiet:
             print('{0}/{1}: {2}'.format(str(index).zfill(len(str(url_count))),
                                         url_count, filename))
+            print(url)
 
         try:
             response = get_login_response(url, credentials, token)

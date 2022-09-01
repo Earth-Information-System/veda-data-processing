@@ -2,16 +2,29 @@ import os
 import re
 import datetime
 
+import numpy as np
+import pandas as pd
 import xarray as xr
 
-from dask.distributed import Client
+from dask.diagnostics.progress import ProgressBar
 
 def main():
-    client = Client()
 
     short_name = "SPL3SMP"
+    zarr_path = f"{short_name}-test.zarr"
+    procfile = "processed-files.txt"
+
     datafiles_all = sorted(os.listdir(short_name))
     datafiles = [short_name + '/' + f for f in datafiles_all if f.endswith("h5")]
+
+    # len(datafiles)
+    # datafiles = datafiles[0:110]
+
+    chunking = {
+        "easting_m": 100,
+        "northing_m": 100,
+        "time": 100
+    }
 
     print("Reading AM files...")
     dat_am = xr.open_mfdataset(datafiles,
@@ -29,11 +42,37 @@ def main():
                                combine='by_coords',
                                group="Soil_Moisture_Retrieval_Data_PM")
 
-    print("Altering chunking strategy...")
+    print("Combining datasets...")
     dat_both = xr.merge((dat_am, dat_pm))
+
+    print("Extending time series for even chunking...")
+    ntime = len(dat_both.time)
+    residual_chunks = chunking["time"] - (ntime % chunking["time"])
+    lastdate = dat_both.time.max().values
+    newdates = pd.date_range(
+        lastdate + pd.Timedelta(1, 'D'),
+        lastdate + pd.Timedelta(residual_chunks, 'D')
+    )
+    assert len(newdates) == residual_chunks
+    alldates = np.concatenate((dat_both.time.values, newdates))
+    assert len(alldates) % chunking["time"] == 0
+    dat_extended = dat_both.reindex({"time": alldates}, fill_value = np.nan)
+    assert len(dat_extended.time) % chunking["time"] == 0
+    dat_extended = dat_extended.chunk(chunking)
+
     print("Writing Zarr output...")
-    zarr_path = short_name + "-unchunked.zarr"
-    dat_both.to_zarr(zarr_path, consolidated=True, mode='w')
+    dat_final = dat_extended.chunk(chunking)
+    with ProgressBar():
+        dat_final.to_zarr(zarr_path, consolidated=True, mode='w')
+
+    print(f"Writing file list to {procfile} ...")
+    with open(procfile, "w") as f:
+        f.writelines(file + "\n" for file in datafiles)
+
+    print("Testing ability to open Zarr...")
+    dtest = xr.open_zarr(zarr_path)
+    dtest.sel(time = slice("2018-01-01", "2018-02-15"))
+    print("Done!")
 
 # Preprocessing function -- takes dataset as an argument
 def mypreproc(d_am_raw):

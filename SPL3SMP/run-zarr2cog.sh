@@ -8,10 +8,6 @@
 source ~/.bashrc
 mod_py39
 
-echo "Python path: $(conda run -n vdp-common which python)"
-echo "Python version: $(conda run -n vdp-common python --version)"
-echo "Working directory: $(pwd)"
-
 echo "Starting script"
 conda run -n vdp-common python -u ../common/zarr2cog.py \
   --outdir=SPL3SMP-cog \
@@ -21,13 +17,5 @@ conda run -n vdp-common python -u ../common/zarr2cog.py \
   --x_dim=easting_m \
   --y_dim=northing_m \
   --timevar=datetime \
+  --timeunit=D \
   > logs/zarr2cog.log
-
-RESULT=$?
-if [[ $RESULT -eq 0 ]]; then
-  echo "Done!"
-else
-  echo "Error executing Python script"
-  exit $RESULT
-fi
-exit
