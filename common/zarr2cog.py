@@ -52,7 +52,7 @@ for var in cogvars:
     for t in dat_v[timevar]:
         # t = dat_v[timevar][0]
         datestring = np.datetime_as_string(t, unit=timeunit)
-        print(f"{var}: {datestring}".ljust(80), end="\r")
+        print(f"{var}: {datestring}")
         outfile = f"{vardir}/{prefix}-{var}-{datestring}.tif"
         if exists(outfile):
             continue
