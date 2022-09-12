@@ -76,10 +76,18 @@ get_data <- function(url, instrument) {
   # url <- url_modis
   tfile <- tempfile(fileext=".txt", tmpdir = tempdir(check=TRUE))
   on.exit(file.remove(tfile), add = TRUE)
-  download.file(
-    url, tfile,
-    headers = c("Authorization" = paste0("Bearer ", token))
+  result <- tryCatch(
+    download.file(
+      url, tfile,
+      headers = c("Authorization" = paste0("Bearer ", token))
+    ),
+    error = function(e) {
+      message("Failed to download for instrument: ", instrument)
+      message("Adding file to failed downloads list and returning NULL.")
+      write(url, "failed.txt", append = TRUE)
+    }
   )
+  if (is.null(result)) return(NULL)
   cc <- cols(confidence = "c", satellite = "c", version = "c")
   raw <- vroom(tfile, col_types = cc)
   dsf <- st_as_sf(
