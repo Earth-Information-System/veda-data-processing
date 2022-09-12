@@ -1,4 +1,6 @@
 raw-input/
 processed-output/
+reference-files/
+plain-text-daily/
 
 .lance_token
