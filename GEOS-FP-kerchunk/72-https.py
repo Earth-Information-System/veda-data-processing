@@ -4,22 +4,31 @@ import fsspec
 import ujson
 import xarray as xr
 
-fs = fsspec.filesystem('file')
+fs = fsspec.filesystem('https')
 
 ncfiles = sorted(fs.glob("raw-data/*.nc4"))
 
-xr.open_mfdataset(ncfiles)
-# <xarray.Dataset>
-# Dimensions:   (lon: 1152, lat: 721, time: 7)
-# Coordinates:
-#   * lon       (lon) float64 -180.0 -179.7 -179.4 -179.1 ... 179.1 179.4 179.7
-#   * lat       (lat) float64 -90.0 -89.75 -89.5 -89.25 ... 89.25 89.5 89.75 90.0
-#   * time      (time) datetime64[ns] 2022-09-01T00:30:00 ... 2022-09-01T06:30:00
-# Data variables: (12/43)
-#     BSTAR     (time, lat, lon) float32 dask.array<chunksize=(1, 721, 1152), meta=np.ndarray>
-#     CDH       (time, lat, lon) float32 dask.array<chunksize=(1, 721, 1152), meta=np.ndarray>
-#     CDM       (time, lat, lon) float32 dask.array<chunksize=(1, 721, 1152), meta=np.ndarray>
-# ...
+# url_dir = "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das/Y2022/M09/D01/"
+# fname = "GEOS.fp.asm.tavg1_2d_flx_Nx.20220901_0030.V01.nc4"
+# url = f"{url_dir}/{fname}"
+
+url = "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das/Y2022/M09/D03/GEOS.fp.asm.inst1_2d_lfo_Nx.20220903_0000.V01.nc4"
+
+fs.exists(url)
+
+with fs.open(url, "rb") as f:
+    chunks = kerchunk.hdf.SingleHdf5ToZarr(f, url)
+    outfile = "http-01.json"
+    with fsspec.open(outfile, "wb") as of:
+        of.write(ujson.dumps(chunks.translate()).encode())
+
+################################################################################
+dtest = xr.open_dataset("reference://", engine="zarr", backend_kwargs={
+    "consolidated": False,
+    "storage_options": {"fo": "http-01.json"}
+})
+
+################################################################################
 
 for ncf in ncfiles:
     with fs.open(ncf, "rb") as f:
