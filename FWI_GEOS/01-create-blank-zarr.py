@@ -79,26 +79,3 @@ assert len(dat_extended.time) % chunking["time"] == 0
 
 with ProgressBar():
     dat_extended.to_zarr('FWI.GEOS-5.zarr', mode="w")
-
-# Now, populate this Zarr one date at a time...
-
-for file in tqdm(files):
-    # date = file[-11:-3]
-    date_match = re.match(r".*\.(\d{8})\.nc", os.path.basename(file))
-    assert date_match
-    date = date_match.group(1)
-    pred_files = sorted(list(glob.glob(f"data/{date}00/*.nc")))   
-    dat = xr.open_dataset(file)
-    dat = dat.squeeze()
-    dat = dat.assign_coords({"time": pd.to_datetime(date),
-                             "forecast": 0})
-    for i,f in enumerate(pred_files):
-        tmp = xr.open_dataset(f)
-        tmp = tmp.squeeze()
-        tmp = tmp.assign_coords({"time": pd.to_datetime(date),
-                                 "forecast": i+1})
-        dat = xr.concat((dat,tmp), dim='forecast')
-    
-    dnew = dat.expand_dims("time")
-    # dat.to_zarr("FWI.GEOS-5.zarr",)
-    # datalist.append(xr.concat((data, dat), dim="time"))
