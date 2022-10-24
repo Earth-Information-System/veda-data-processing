@@ -14,6 +14,9 @@ from tqdm.auto import tqdm
 
 zar_file = 'FWI.GEOS-5.zarr'
 
+# Change to true to force overwriting existing data.
+overwrite = False
+
 # Keep all the dataset in the data directory
 files = []
 # years = range(2017, 2023)
@@ -29,24 +32,25 @@ for file in tqdm(files):
     date_match = re.match(r".*\.(\d{8})\.nc", os.path.basename(file))
     assert date_match
     date = date_match.group(1)
+    pd_date = pd.to_datetime(date)
+    dtarget = xr.open_zarr(zar_file)
+    # NOTE: This doesn't work for some reason. Turns up true at every timestep,
+    # even if they should be all nans. Comment out for now.
+    # if not overwrite and dtarget.sel(time=pd_date)["GEOS-5_FWI"].notnull().any().values:
+    #     print(f"Data exist for timestep {date}. Skipping this timestep...")
+    #     continue
     year = date[0:4]
     datedir = f"{basedir}/{year}/{date}00"
     assert os.path.exists(datedir)
+    # Get list of forecast files.
     pred_files = sorted(glob.glob(f"{datedir}/*.nc"))   
-    dat = xr.open_dataset(file)
-    dat = dat.squeeze()
-    dat = dat.assign_coords({"time": pd.to_datetime(date),
-                             "forecast": 0})
-    for i,f in enumerate(pred_files):
-        tmp = xr.open_dataset(f)
-        tmp = tmp.squeeze()
-        tmp = tmp.assign_coords({"time": pd.to_datetime(date),
-                                 "forecast": i+1})
-        dat = xr.concat((dat,tmp), dim='forecast')
+    if not len(pred_files):
+        print(f"No files found for date {date}. Skipping this timestep.")
+        continue
+    # Open base date file (forecast = 0)
+    dat = xr.open_mfdataset([file] + pred_files, combine="nested", concat_dim="forecast")
+    dnew = dat.assign_coords({"forecast": range(0, 1+len(pred_files))})
     
-    dnew = dat.expand_dims("time").transpose("forecast", "time", "lat", "lon")
-
-    dtarget = xr.open_zarr(zar_file)
     is_in = dtarget.time.isin(dnew.time)
     n_is_in = is_in.sum()
     if n_is_in > 1:
