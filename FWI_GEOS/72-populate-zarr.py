@@ -47,8 +47,12 @@ for file in tqdm(files):
     if not len(pred_files):
         print(f"No files found for date {date}. Skipping this timestep.")
         continue
-    # Open base date file (forecast = 0)
-    dat = xr.open_mfdataset([file] + pred_files, combine="nested", concat_dim="forecast")
+    try:
+        dat = xr.open_mfdataset([file] + pred_files, combine="nested", concat_dim="forecast")
+    except Exception as err:
+        print(f"Failed to open date {date} with error: `{str(err)}`")
+        print("Skipping this timestep...")
+        continue
     dnew = dat.assign_coords({"forecast": range(0, 1+len(pred_files))})
     
     is_in = dtarget.time.isin(dnew.time)
