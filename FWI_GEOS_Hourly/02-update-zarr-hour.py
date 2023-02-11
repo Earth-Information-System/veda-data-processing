@@ -27,6 +27,8 @@ allfiles = []
 basedir = "/lovelace/brewer/rfield1/storage/observations/GFWED/Sipongi/fwiCalcs.GEOS-5/Default/GEOS-5/"
 assert os.path.exists(basedir)
 years = range(2017, int(datetime.now().year) + 1)
+years = range(2022, 2023) # TODO - remove limit after testing
+
 for y in years:
     assert os.path.exists(f"{basedir}/{y}")
     allfiles += sorted(glob.glob(f"{basedir}/{y}/FWI.GEOS-5.Hourly.*.nc"))

@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 import dask
+import dask.array
 
 from dask.diagnostics.progress import ProgressBar
 from tqdm.auto import tqdm
@@ -19,7 +20,19 @@ from tqdm.auto import tqdm
 import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-zar_file = 'FWI.GEOS-5.Hourly.zarr' # flag - may be different
+# MODIFIED TODO - does it require an absolute or relative path?
+zar_file = '/autofs/brewer/eisfire/katrina/FWI.GEOS-5.Hourly.zarr'
+procfile = '/autofs/brewer/eisfire/katrina/processed-files-bak-hourly.txt'
+
+# Test if dir zar_file and procfile exist
+if os.path.isdir(zar_file):
+	pass
+else:
+	raise FileNotFoundError('Zarr directory does not exist. Provide a valid path or create a new directory')	
+if os.path.isfile(procfile):
+	pass
+else:
+	raise FileNotFoundError('The processing .txt file does not exist. Provide a valid path or create a .txt file')
 
 chunking = {
     "lat": 100,
@@ -30,7 +43,8 @@ chunking = {
 # Keep all the dataset in the data directory
 files = []
 years = range(2017, int(datetime.now().year) + 1)
-
+years = range(2022, 2023) # TODO - restore original dates upon completion 
+ 
 # base directory
 basedir = "/lovelace/brewer/rfield1/storage/observations/GFWED/Sipongi/fwiCalcs.GEOS-5/Default/GEOS-5/"
 
@@ -62,6 +76,9 @@ def make_blank(pd_date):
             transpose("time", "lat", "lon"))
 
 dlist = []
+# MODIFIED ARR - slice for only two files
+files = files[:2:] 
+
 # Sort files using annual directories
 for file in tqdm(files):
     date_match = re.match(r".*\.(\d{8})\.nc", os.path.basename(file))
@@ -117,7 +134,16 @@ dat_extended = dat_extended.chunk(chunking)
 # Write to file + progress bar
 with ProgressBar():
     dat_extended.to_zarr(zar_file, mode="w")
+    
+# TODO - update bak to include all written file names
+with open(procfile, "a") as f:
+	for afile in files:
+		f.write("\n" +  afile)
 
 # Test output
 # See Katrina Sharonin's local testing module
-
+print("Initiate testing: GEOS-5_FFMC Contents")
+open_test = xr.open_zarr(zar_file)
+open_test1 = open_test.isel(time=slice(0,24))['GEOS-5_FFMC'].values
+open_test1_count = np.count_nonzero(~np.isnan(open_test1))
+print(open_test1_count)
