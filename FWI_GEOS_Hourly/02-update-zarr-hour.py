@@ -10,6 +10,8 @@ from datetime import datetime
 from os.path import exists
 
 import dask
+import dask.array
+
 import os
 from tqdm.auto import tqdm
 import netCDF4 as nc
@@ -20,8 +22,18 @@ import numpy as np
 
 
 timevar = "time"
-zarrpath = 'FWI.GEOS-5.Hourly.zarr' # flag - may be different
-procfile = "processed-files-bak-hourly.txt" # flag - may be different
+zarrpath = '/autofs/brewer/eisfire/katrina/FWI.GEOS-5.Hourly.zarr'
+procfile = "/autofs/brewer/eisfire/katrina/processed-files-bak-hourly.txt" # flag - may be different
+
+# Test if zar_file and procfile exist
+if os.path.isdir(zarrpath):
+	pass
+else:
+	raise FileNotFoundError('Zarr directory does not exist. Provie a valid path or create a new dir')
+if os.path.isfile(procfile):
+	pass
+else:
+	raise FileNotFoundError('The processing .txt. file does not exist. Provide a valid path or create a new .txt')
 
 allfiles = []
 basedir = "/lovelace/brewer/rfield1/storage/observations/GFWED/Sipongi/fwiCalcs.GEOS-5/Default/GEOS-5/"
@@ -76,6 +88,9 @@ def make_blank(pd_date):
 
 # base directory
 dlist = []
+
+# TODO MODIFIED: list cut down
+newfiles = newfiles[:6:]
 
 for file in tqdm(newfiles):
     date_match = re.match(r".*\.(\d{8})\.nc", os.path.basename(file))
@@ -175,6 +190,11 @@ for idt, t in enumerate(dnew_all.time):
         dummy.to_zarr(zarrpath, append_dim="time")
 
 print('Update zarr process complete!')
+
+# Write to bak file with new files
+with open(procfile, "a") as f:
+	for afile in newfiles:
+		f.write("\n" + afile)
 
 # print('Initiate testing...')
 # Test output
