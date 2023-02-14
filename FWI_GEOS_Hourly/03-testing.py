@@ -1,3 +1,5 @@
+#!/usr/bin.python3
+
 # 03-testing.py
 # Test resulting zarr for contents
 
@@ -9,6 +11,7 @@ from datetime import datetime
 from os.path import exists
 
 import dask
+from dask.diagnostics.progress import ProgressBar
 import os
 from tqdm.auto import tqdm
 import netCDF4 as nc
@@ -103,33 +106,35 @@ for y in range(2017, int(datetime.now().year) + 1):
 	all_fwi_files += sorted(glob.glob(f"{basedir}/{y}/FWI.GEOS-5.Hourly.*.nc"))
 
 # use given bak file list + date list - currently only for 0th hour
-for dat in bak_dates:
-	found_match = []
-	# convert to string match form
-	dat_str = str(10000*dat.year + 100*dat.month + dat.day)
-	# find match in all_fwi_files 
-	found_match_pre = [dat_str in a for a in all_fwi_files]
-	assert (len(found_match_pre) == len(all_fwi_files))
-	found_match = [x for x, y in zip(all_fwi_files, found_match_pre) if y == True]
-	# there should only be single file that matches
-	# print(found_match)
-	assert (len(found_match) == 1) 
-	found_match = found_match[0] 
-	hours = [*range(0,24)] # note: file_data is +1 ahead
 
-	# test equal content for all hours, all days
-	for h in hours:
-		# open match with xr for content
-		file_data = (xr.open_mfdataset(found_match)).sel(time = int(h) + 1)
-		# slice into zarr using selected date
-		dat = dat.replace(hour=h) # update hour of dat using loop
-		dat_zarr_data = main_zarr.sel(time = dat)
-	
-		# For all subgroups, all data should align i.e. no False ever
-		subgroup_strs = ["GEOS-5_FFMC", "GEOS-5_FWI", "GEOS-5_ISI"]
-		for subs in subgroup_strs:
-			test_equality = dat_zarr_data[subs].values.astype('int32') == file_data[subs].values.astype('int32')
-			assert (False not in test_equality)
+with ProgressBar():
+	for dat in bak_dates:
+		found_match = []
+		# convert to string match form
+		dat_str = str(10000*dat.year + 100*dat.month + dat.day)
+		# find match in all_fwi_files 
+		found_match_pre = [dat_str in a for a in all_fwi_files]
+		assert (len(found_match_pre) == len(all_fwi_files))
+		found_match = [x for x, y in zip(all_fwi_files, found_match_pre) if y == True]
+		# there should only be single file that matches
+		# print(found_match)
+		assert (len(found_match) == 1) 
+		found_match = found_match[0] 
+		hours = [*range(0,24)] # note: file_data is +1 ahead
+
+		# test equal content for all hours, all days
+		for h in hours:
+			# open match with xr for content
+			file_data = (xr.open_mfdataset(found_match)).sel(time = int(h) + 1)
+			# slice into zarr using selected date
+			dat = dat.replace(hour=h) # update hour of dat using loop
+			dat_zarr_data = main_zarr.sel(time = dat)
+		
+			# For all subgroups, all data should align i.e. no False ever
+			subgroup_strs = ["GEOS-5_FFMC", "GEOS-5_FWI", "GEOS-5_ISI"]
+			for subs in subgroup_strs:
+				test_equality = dat_zarr_data[subs].values.astype('int32') == file_data[subs].values.astype('int32')
+				assert (False not in test_equality)
 
 
 print("Test 2 passed: all content matching!")
